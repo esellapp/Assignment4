@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Assignment 4</title>
+
+  <!-- D3 -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <!-- Styles (Replit serves from root, so just "styles.css") -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        How do the
+        <select id="region-select"></select>
+        on average compare to the other
+        <span class="pill">Regions</span>
+        across <span id="metric-count"></span> metrics?
+      </h1>
+    </header>
+
+    <div class="subtitle">All metrics</div>
+    <div class="subtitle-small">
+      Hover over a circle or a metric arc to view details.
+    </div>
+
+    <div id="chart-wrapper">
+      <svg id="radial-chart" width="900" height="900"></svg>
+      <div id="tooltip" class="tooltip" style="opacity: 0;"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
