@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------- 
 // CONFIG
 // -----------------------------------------------------------------------------
 
@@ -115,18 +115,26 @@ const metricArcGen = d3.arc()
   .outerRadius(outerRadius + 30);
 
 // purple arc
+const greyArcGen = d3.arc()
+  .innerRadius(outerRadius + 38)
+  .outerRadius(outerRadius + 41);
+
+const greyArcPath = g.append("path")
+  .attr("class", "grey-arc")
+  .attr("d", greyArcGen({ startAngle: 0, endAngle: 2 * Math.PI }));
+
 const strengthArcGen = d3.arc()
-  .innerRadius(outerRadius + 35)
-  .outerRadius(outerRadius + 45);
+  .innerRadius(outerRadius + 38)
+  .outerRadius(outerRadius + 41);
 
 const strengthArcPath = g.append("path")
   .attr("class", "strength-arc");
 
 // center summary
-const summaryGroup = g.append("g");
+const summaryGroup = g.append("g").attr("class", "summary-group");
 summaryGroup.append("text")
   .attr("class", "summary-text")
-  .attr("y", -5);
+  .attr("y", -10);
 summaryGroup.append("text")
   .attr("class", "summary-subtext")
   .attr("y", 18);
@@ -152,6 +160,40 @@ function mean(values) {
   const valid = values.filter(v => !isNaN(v));
   return valid.length ? d3.mean(valid) : NaN;
 }
+
+
+// -----------------------------------------------------------------------------
+// WRAP TEXT FUNCTION FOR CENTER SUMMARY
+// -----------------------------------------------------------------------------
+
+function wrapCenterText(selection, textString, maxChars = 32) {
+  selection.selectAll("tspan").remove();
+
+  const words = textString.split(" ");
+  let line = [];
+  let lineNumber = 0;
+  const lineHeight = 16;
+
+  words.forEach(word => {
+    const test = [...line, word].join(" ");
+    if (test.length > maxChars) {
+      selection.append("tspan")
+        .attr("x", 0)
+        .attr("dy", lineNumber === 0 ? 0 : lineHeight)
+        .text(line.join(" "));
+      line = [word];
+      lineNumber++;
+    } else {
+      line.push(word);
+    }
+  });
+
+  selection.append("tspan")
+    .attr("x", 0)
+    .attr("dy", lineNumber === 0 ? 0 : lineHeight)
+    .text(line.join(" "));
+}
+
 
 // -----------------------------------------------------------------------------
 // DATA LOADING
@@ -189,6 +231,7 @@ Promise.all([
     console.error("Error loading data:", err);
   });
 
+
 // -----------------------------------------------------------------------------
 // UI
 // -----------------------------------------------------------------------------
@@ -210,6 +253,7 @@ function initUI() {
     update(selectedRegion);
   });
 }
+
 
 // -----------------------------------------------------------------------------
 // MAIN UPDATE
@@ -297,16 +341,10 @@ function update(regionName) {
 
   const arcsEnter = arcs.enter()
     .append("path")
-    .attr("class", "metric-arc-bg")
-    .on("mouseover", (event, d) => {
-      // highlight this wedge
-      d3.select(event.currentTarget).classed("hovered", true);
-    })
-    .on("mouseout", (event, d) => {
-      d3.select(event.currentTarget).classed("hovered", false);
-    });
+    .attr("class", "metric-arc-bg");
 
   arcsEnter.merge(arcs)
+    .attr("fill", null)
     .transition()
     .duration(600)
     .attr("d", d => {
@@ -318,7 +356,7 @@ function update(regionName) {
   arcs.exit().remove();
 
   // ---------------------------------------------------------------------------
-  // Metric groups (axis, dashed connector, label, dot container)
+  // Metric groups
   // ---------------------------------------------------------------------------
 
   const metricGroups = metricsGroup.selectAll(".metric")
@@ -328,7 +366,6 @@ function update(regionName) {
     .append("g")
     .attr("class", "metric");
 
-  // straight axis line
   metricEnter.append("line")
     .attr("class", "metric-axis")
     .attr("x1", 0)
@@ -336,43 +373,36 @@ function update(regionName) {
     .attr("x2", 0)
     .attr("y2", -outerRadius);
 
-  // dashed connector for dots
   metricEnter.append("line")
     .attr("class", "metric-connector");
 
-  // label
   metricEnter.append("text")
     .attr("class", "metric-label")
     .attr("x", 0)
     .attr("y", -(outerRadius + 20))
     .text(d => d.label);
 
-  // dot container
   metricEnter.append("g")
     .attr("class", "dots");
 
-  // update rotation for all metric groups
   metricGroups.merge(metricEnter)
     .transition()
     .duration(600)
     .attr("transform", d => {
       const angle = angleScale(d.key);
-      const degrees = (angle * 180 / Math.PI) - 90;
-      return `rotate(${degrees})`;
+      return `rotate(${angle * 180 / Math.PI - 90})`;
     });
 
   metricGroups.exit().remove();
 
   // ---------------------------------------------------------------------------
-  // Update dashed connectors (min–max across region dots)
+  // Update dashed connectors (min–max)
   // ---------------------------------------------------------------------------
 
   metricsGroup.selectAll(".metric")
     .select(".metric-connector")
     .each(function (d) {
-      const vals = d.valuesPerRegion
-        .map(v => v.value)
-        .filter(v => !isNaN(v));
+      const vals = d.valuesPerRegion.map(v => v.value).filter(v => !isNaN(v));
       if (!vals.length) {
         d3.select(this).attr("y1", -innerRadius).attr("y2", -innerRadius);
         return;
@@ -382,54 +412,31 @@ function update(regionName) {
       d3.select(this)
         .transition()
         .duration(600)
-        .attr("x1", 0)
-        .attr("x2", 0)
+        .attr("x1", 0).attr("x2", 0)
         .attr("y1", -maxR)
         .attr("y2", -minR);
     });
 
   // ---------------------------------------------------------------------------
-  // Dots per metric (6 circles, one per region)
+  // Dots per region per metric
   // ---------------------------------------------------------------------------
 
-  const allMetricGroups = metricsGroup.selectAll(".metric");
-
-  const dots = allMetricGroups.select(".dots")
+  const dots = metricsGroup.selectAll(".metric")
+    .select(".dots")
     .selectAll("circle")
     .data(d =>
       d.valuesPerRegion.map(v => ({
         metric: d,
         region: v.region,
         value: v.value
-      })), d => d.region);
+      })),
+      d => d.region
+    );
 
   const dotsEnter = dots.enter()
     .append("circle")
     .attr("class", "region-dot")
-    .attr("r", d => d.region === regionName ? 7 : 4)
-    .on("mouseover", (event, d) => {
-      // 1) highlight its wedge
-      arcsGroup.selectAll(".metric-arc-bg")
-        .classed("hovered", arcD => arcD.key === d.metric.key);
-
-      // 2) show tooltip
-      const [mx, my] = d3.pointer(event, document.body);
-      tooltip
-        .style("left", `${mx + 10}px`)
-        .style("top", `${my + 10}px`)
-        .style("opacity", 1)
-        .html(`
-          <div class="tooltip-title">${d.metric.label}</div>
-          <div class="tooltip-row"><span class="tooltip-label">Region:</span> ${d.region}</div>
-          <div class="tooltip-row"><span class="tooltip-label">Value:</span> ${
-            isNaN(d.value) ? "N/A" : d3.format(".2f")(d.value)
-          }</div>
-        `);
-    })
-    .on("mouseout", () => {
-      arcsGroup.selectAll(".metric-arc-bg").classed("hovered", false);
-      tooltip.style("opacity", 0);
-    });
+    .attr("r", d => d.region === regionName ? 7 : 4);
 
   dotsEnter.merge(dots)
     .attr("class", d =>
@@ -446,7 +453,7 @@ function update(regionName) {
   dots.exit().remove();
 
   // ---------------------------------------------------------------------------
-  // Purple arc for "stronger" metrics
+  // Purple arc
   // ---------------------------------------------------------------------------
 
   const strongMetrics = metricsData.filter(d => d.isStronger);
@@ -455,11 +462,9 @@ function update(regionName) {
     strengthArcPath.attr("d", null);
   } else {
     const start = d3.min(strongMetrics,
-      d => angleScale(d.key) - bandwidth / 2
-    );
+      d => angleScale(d.key) - bandwidth / 2);
     const end = d3.max(strongMetrics,
-      d => angleScale(d.key) + bandwidth / 2
-    );
+      d => angleScale(d.key) + bandwidth / 2);
 
     strengthArcPath
       .transition()
@@ -468,7 +473,7 @@ function update(regionName) {
   }
 
   // ---------------------------------------------------------------------------
-  // Center summary
+  // Center Summary (with wrapped text!)
   // ---------------------------------------------------------------------------
 
   const totalMetrics = metricsData.length;
@@ -478,8 +483,10 @@ function update(regionName) {
   summaryGroup.select(".summary-text")
     .text(`${d3.format(".0f")(percent)}%`);
 
-  summaryGroup.select(".summary-subtext")
-    .text(
-      `of metrics are stronger than the average of other Regions for ${regionName}.`
-    );
+  const sub = summaryGroup.select(".summary-subtext");
+  wrapCenterText(
+    sub,
+    `of metrics are stronger than the average of other Regions for ${regionName}.`,
+    28 // max characters per line (adjust for width)
+  );
 }
