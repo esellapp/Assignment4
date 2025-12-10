@@ -29,7 +29,18 @@
 
     <div id="chart-wrapper">
       <svg id="radial-chart" width="900" height="900"></svg>
-      <div id="tooltip" class="tooltip" style="opacity: 0;"></div>
+      <div id="tooltip" class="tooltip" style="opacity: 0;">
+        <div class="tooltip-value"></div>
+        <div class="tooltip-divider"></div>
+        <div class="tooltip-label-row">
+          <span class="tooltip-label">METRIC :</span>
+          <span class="tooltip-text" id="tooltip-metric"></span>
+        </div>
+        <div class="tooltip-label-row">
+          <span class="tooltip-label">REGION :</span>
+          <span class="tooltip-text" id="tooltip-region"></span>
+        </div>
+      </div>
     </div>
   </div>
 

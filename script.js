@@ -436,7 +436,29 @@ function update(regionName) {
   const dotsEnter = dots.enter()
     .append("circle")
     .attr("class", "region-dot")
-    .attr("r", d => d.region === regionName ? 7 : 4);
+    .attr("r", d => d.region === regionName ? 7 : 4)
+    .on("mouseover", (event, d) => {
+
+        const [mx, my] = d3.pointer(event, document.getElementById("radial-chart"));
+
+        tooltip
+          .style("opacity", 1)
+          .style("left", `${mx + 15}px`)
+          .style("top", `${my + 15}px`);
+
+        tooltip.select(".tooltip-value")
+          .text(isNaN(d.value) ? "N/A" : d3.format(".1f")(d.value) + "%");
+
+        tooltip.select("#tooltip-metric")
+          .text(d.metric.label.toUpperCase());
+
+        tooltip.select("#tooltip-region")
+          .text(d.region);
+    })
+    .on("mouseout", () => {
+        arcsGroup.selectAll(".metric-arc-bg").classed("hovered", false);
+        tooltip.style("opacity", 0);
+    });
 
   dotsEnter.merge(dots)
     .attr("class", d =>

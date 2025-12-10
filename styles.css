@@ -98,9 +98,8 @@ header h1 {
   text-anchor: middle;
 }
 
-/* Circles: all interactive even though metric groups ignore events */
 .metric {
-  pointer-events: none;
+  pointer-events: all;
 }
 
 .region-dot {
@@ -166,24 +165,50 @@ header h1 {
   position: absolute;
   pointer-events: none;
   background: white;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  color: #222;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-  opacity: 0;
+  border-radius: 12px;
+  padding: 18px 22px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   transition: opacity 0.15s ease;
+  width: 260px;
 }
 
-.tooltip-title {
-  font-weight: 600;
-  margin-bottom: 2px;
+.tooltip-value {
+  font-size: 34px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 10px;
 }
 
-.tooltip-row {
-  margin: 1px 0;
+.tooltip-divider {
+  height: 1px;
+  width: 100%;
+  background: #e5e5e5;
+  margin: 8px 0 12px 0;
+}
+
+.tooltip-label-row {
+  font-size: 15px;
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
 }
 
 .tooltip-label {
-  color: #666;
+  font-weight: 600;
+  color: #555;
+}
+
+.tooltip-text {
+  font-weight: 500;
+  color: #222;
+}
+
+.metric-hover .metric-axis,
+.metric-hover .metric-label {
+  stroke: #b5b5c0;
+  fill: #555;
+}
+
+.metric-arc-bg.hovered {
+  fill: #e8e8ed !important;
 }
