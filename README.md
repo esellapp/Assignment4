@@ -1,5 +1,9 @@
-Required tools
+Ashmitha Gowda, Elvin Sellappan, Kate Adkins, Ethan Chavis 
+CMSC 471 
 
+Assignment 4 
+
+Required tools
 A text editor (VS Code recommended)
 A modern web browser (Chrome recommended)
 
@@ -21,4 +25,4 @@ VS Code Live Server :
 Install the "Live Server" extension in VS Code
 Remember to click on install.
 
-To run the application run the server
+To run the application run Go Live in VS Code or run the python server
