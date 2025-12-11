@@ -1,11 +1,8 @@
-// ----------------------------------------------------------------------------- 
-// CONFIG
-// -----------------------------------------------------------------------------
+
 
 const DATA_FILE = "data.csv";
 const REGIONS_FILE = "regions.csv";
 
-// Regions required by the assignment
 const REGION_LIST = [
   "Americas",
   "East Asia & Pacific",
@@ -15,7 +12,6 @@ const REGION_LIST = [
   "Sub-Saharan Africa"
 ];
 
-// Metrics to plot (must match data.csv column names)
 const METRICS = [
   { key: "GINI index", label: "GINI Index", higherBetter: false },
   { key: "happy planet index", label: "Happy Planet Index", higherBetter: true },
@@ -85,9 +81,6 @@ const METRICS = [
   }
 ];
 
-// -----------------------------------------------------------------------------
-// GLOBAL STATE + SVG SETUP
-// -----------------------------------------------------------------------------
 
 let countries = [];
 let selectedRegion = "Americas";
@@ -109,12 +102,10 @@ const g = svg.append("g")
 
 const tooltip = d3.select("#tooltip");
 
-// background metric wedges
 const metricArcGen = d3.arc()
   .innerRadius(innerRadius - 20)
   .outerRadius(outerRadius + 30);
 
-// purple arc
 const greyArcGen = d3.arc()
   .innerRadius(outerRadius + 38)
   .outerRadius(outerRadius + 41);
@@ -130,7 +121,6 @@ const strengthArcGen = d3.arc()
 const strengthArcPath = g.append("path")
   .attr("class", "strength-arc");
 
-// center summary
 const summaryGroup = g.append("g").attr("class", "summary-group");
 summaryGroup.append("text")
   .attr("class", "summary-text")
@@ -139,13 +129,9 @@ summaryGroup.append("text")
   .attr("class", "summary-subtext")
   .attr("y", 18);
 
-// groups
 const arcsGroup = g.append("g").attr("class", "metric-arcs");
 const metricsGroup = g.append("g").attr("class", "metrics");
 
-// -----------------------------------------------------------------------------
-// UTILITIES
-// -----------------------------------------------------------------------------
 
 function parseNumber(value) {
   if (value == null) return NaN;
@@ -162,9 +148,7 @@ function mean(values) {
 }
 
 
-// -----------------------------------------------------------------------------
-// WRAP TEXT FUNCTION FOR CENTER SUMMARY
-// -----------------------------------------------------------------------------
+
 
 function wrapCenterText(selection, textString, maxChars = 32) {
   selection.selectAll("tspan").remove();
@@ -194,10 +178,6 @@ function wrapCenterText(selection, textString, maxChars = 32) {
     .text(line.join(" "));
 }
 
-
-// -----------------------------------------------------------------------------
-// DATA LOADING
-// -----------------------------------------------------------------------------
 
 Promise.all([
   d3.csv(DATA_FILE),
@@ -232,9 +212,6 @@ Promise.all([
   });
 
 
-// -----------------------------------------------------------------------------
-// UI
-// -----------------------------------------------------------------------------
 
 function initUI() {
   const select = d3.select("#region-select");
@@ -255,12 +232,8 @@ function initUI() {
 }
 
 
-// -----------------------------------------------------------------------------
-// MAIN UPDATE
-// -----------------------------------------------------------------------------
 
 function update(regionName) {
-  // 1. Aggregate per metric per region
   const regionAveragesByMetric = METRICS.map(metric => {
     const valuesPerRegion = REGION_LIST.map(region => {
       const vals = countries
@@ -297,7 +270,6 @@ function update(regionName) {
     };
   });
 
-  // 2. Sort so stronger metrics are grouped together
   regionAveragesByMetric.sort((a, b) => {
     if (a.isStronger !== b.isStronger) {
       return a.isStronger ? -1 : 1;
@@ -307,7 +279,6 @@ function update(regionName) {
 
   metricsData = regionAveragesByMetric;
 
-  // 3. angular scale
   const angleScale = d3.scaleBand()
     .domain(metricsData.map(d => d.key))
     .range([0, 2 * Math.PI])
@@ -315,7 +286,6 @@ function update(regionName) {
 
   const bandwidth = angleScale.bandwidth();
 
-  // 4. radial scales per metric
   metricsData.forEach(metric => {
     const vals = metric.valuesPerRegion
       .map(v => v.value)
@@ -332,9 +302,6 @@ function update(regionName) {
       .range([innerRadius, outerRadius]);
   });
 
-  // ---------------------------------------------------------------------------
-  // Metric wedges (background arcs)
-  // ---------------------------------------------------------------------------
 
   const arcs = arcsGroup.selectAll(".metric-arc-bg")
     .data(metricsData, d => d.key);
@@ -355,9 +322,7 @@ function update(regionName) {
 
   arcs.exit().remove();
 
-  // ---------------------------------------------------------------------------
-  // Metric groups
-  // ---------------------------------------------------------------------------
+
 
   const metricGroups = metricsGroup.selectAll(".metric")
     .data(metricsData, d => d.key);
@@ -395,9 +360,7 @@ function update(regionName) {
 
   metricGroups.exit().remove();
 
-  // ---------------------------------------------------------------------------
-  // Update dashed connectors (min–max)
-  // ---------------------------------------------------------------------------
+
 
   metricsGroup.selectAll(".metric")
     .select(".metric-connector")
@@ -417,9 +380,7 @@ function update(regionName) {
         .attr("y2", -minR);
     });
 
-  // ---------------------------------------------------------------------------
-  // Dots per region per metric
-  // ---------------------------------------------------------------------------
+
 
   const dots = metricsGroup.selectAll(".metric")
     .select(".dots")
@@ -474,9 +435,7 @@ function update(regionName) {
 
   dots.exit().remove();
 
-  // ---------------------------------------------------------------------------
-  // Purple arc
-  // ---------------------------------------------------------------------------
+
 
   const strongMetrics = metricsData.filter(d => d.isStronger);
 
@@ -494,9 +453,6 @@ function update(regionName) {
       .attr("d", strengthArcGen({ startAngle: start, endAngle: end }));
   }
 
-  // ---------------------------------------------------------------------------
-  // Center Summary (with wrapped text!)
-  // ---------------------------------------------------------------------------
 
   const totalMetrics = metricsData.length;
   const strongCount = strongMetrics.length;
@@ -509,6 +465,6 @@ function update(regionName) {
   wrapCenterText(
     sub,
     `of metrics are stronger than the average of other Regions for ${regionName}.`,
-    28 // max characters per line (adjust for width)
+    28 
   );
 }
